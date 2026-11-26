@@ -60,6 +60,16 @@ select option{background:var(--bg);color:var(--ink)}.sm:disabled{opacity:.35;cur
 #ld .ldt{display:flex;justify-content:space-between;font-weight:600;letter-spacing:-.01em}#ld .ldt span:last-child{color:var(--mute);font-weight:400}
 #ldn{font-size:clamp(110px,32vw,360px);line-height:.78;font-weight:600;letter-spacing:-.065em;font-variant-numeric:tabular-nums;margin-left:-.04em;transition:color .3s}#ld.go #ldn{color:var(--ac)}
 html.ni .snip{filter:none}
+.lbl .sm{margin-left:10px;padding:2px 12px;font-size:13px}
+.dd{position:relative;border:1px solid var(--line);background:none;border-radius:999px;padding:7px 36px 7px 16px;font-size:14px;cursor:pointer;color:var(--ink);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:border-color .25s,color .25s,transform .2s}
+.dd:after{content:'';position:absolute;right:15px;top:50%;width:6px;height:6px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:translateY(-70%) rotate(45deg);transition:transform .3s}
+.dd:hover,.dd.open{border-color:var(--ac)}.dd:active{transform:scale(.97)}.dd.open:after{transform:translateY(-25%) rotate(225deg)}.dd.set{color:var(--ac);border-color:color-mix(in srgb,var(--ac) 45%,var(--line))}
+.ddm{position:fixed;z-index:80;padding:6px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 18px 50px rgba(0,0,0,.4);overflow:auto;animation:pop .22s cubic-bezier(.2,.8,.2,1);transition:opacity .12s,transform .12s}
+.ddm.out{opacity:0;transform:scale(.97)}
+.ddi{position:relative;padding:9px 14px 9px 34px;border-radius:10px;cursor:pointer;font-size:14.5px;white-space:nowrap;transition:background .15s}
+.ddi:hover,.ddi.hv{background:color-mix(in srgb,var(--ink) 9%,transparent)}
+.ddi.on{color:var(--ac);font-weight:600}.ddi.on:before{content:'';position:absolute;left:14px;top:50%;width:5px;height:9px;border:solid var(--ac);border-width:0 2px 2px 0;transform:translateY(-62%) rotate(45deg)}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(6px)}}
 #ldb{height:4px;background:var(--ac);transform:scaleX(0);transform-origin:left;margin:22px -22px 0}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -68,17 +78,17 @@ html.ni .snip{filter:none}
 <nav class="nv"><a class="roll" href="#top"><span data-t="HSC Bank">HSC Bank</span></a><span><button class="pill" id="sy">Sync: checking</button> <button class="pill" id="th">Light / dark</button></span></nav>
 <header class="hero" id="top"><h1 class="disp"><span><b>Question</b></span><span><b>bank.</b></span></h1><p class="sub">Upload past papers, sort them by topic, and work through one question at a time. Solutions are one tap away.</p>
 <div class="stats"><div><b id="n1">000</b><span>questions</span></div><div><b id="n2">000</b><span>with solutions</span></div><div id="hring"></div></div></header>
-<div class="lbl">Subject</div><div class="tabs" id="tabs"></div>
+<div class="lbl">Subject <button class="sm" id="addsub">Add subject</button></div><div class="tabs" id="tabs"></div>
 <div class="bar"><label class="hint"><input type="checkbox" id="shuf"> Shuffle order</label></div>
-<div class="lbl">Practice sets</div><div class="grid" id="grid"></div>
-<div class="lbl">Add papers</div><div class="drop" id="up" tabindex="0"><b>Drop PDFs here</b> or tap to upload<br><span class="hint">Exam and solutions can be separate PDFs or one file. Handwritten or scanned solution pages at the back are picked up automatically.</span><input type="file" id="pdfs" accept=".pdf" multiple hidden></div>
+<div class="lbl">Practice sets</div><div class="tpb" id="pf"></div><div class="grid" id="grid"></div>
+<div class="lbl">Add papers</div><div class="drop" id="up" tabindex="0"><b>Drop PDFs here</b> or tap to upload<br><span class="hint">Exam and solutions can be separate PDFs or one file. Handwritten or scanned solution pages at the back are picked up automatically. Subject (any NSW subject) and paper type (HSC, Trial, Term 1–4, Half-yearly…) are detected from the title page.</span><input type="file" id="pdfs" accept=".pdf" multiple hidden></div>
 <div class="bar"><select id="subsel"><option value="">Subject: auto-detect</option><option value="maths">Force Maths Advanced</option><option value="ext1">Force Maths Ext 1</option><option value="business">Force Business</option><option value="chem">Force Chemistry</option><option value="physics">Force Physics</option></select><select id="typesel"><option value="">File type: auto-detect</option><option value="ex">Treat as exam</option><option value="mg">Treat as solutions</option></select><button class="btn" id="exp">Export backup</button><button class="btn" id="imp">Import backup</button><input type="file" id="file" accept=".json" hidden></div>
 <p class="hint" id="msg"></p>
 </div>
 <div id="pr" hidden>
 <div class="top"><button class="x" id="close">✕</button><div class="t"><b id="pt"></b><span class="hint" id="pc"></span></div><div id="pring"></div><span id="tt" hidden></span><label class="sw" title="Timed mode"><input type="checkbox" id="tm"><i></i></label></div><div class="tbar" id="tb" hidden><div></div></div>
 <div class="stage"><div class="inner" id="card"><div id="meta"></div><img class="snip" id="qi" alt="Question"><div class="sol" id="sol" hidden></div><div id="tp" hidden></div><div class="fin" id="fin" hidden></div></div></div>
-<div class="nav" id="nav"><button class="arrow l" id="prev" title="Previous">←</button><button class="sm" id="solbtn" hidden>Show solution</button><button class="sm" id="inv" title="Invert question pages in dark mode">Invert pages</button><button class="sm" id="dn">Mark done</button><select class="sm" id="rt" style="background:var(--bg)"><option value="">Rate difficulty</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="extreme">Extreme</option></select><select class="sm" id="mv" style="max-width:160px;background:var(--bg)"></select><button class="arrow" id="next" title="Next">→</button></div>
+<div class="nav" id="nav"><button class="arrow l" id="prev" title="Previous">←</button><button class="sm" id="solbtn" hidden>Show solution</button><button class="sm" id="inv" title="Invert question pages in dark mode">Invert pages</button><button class="sm" id="dn">Mark done</button><select class="sm" id="rt" style="background:var(--bg)"><option value="">Rate difficulty</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="extreme">Extreme</option></select><select class="sm" id="pts" title="Paper type"></select><select class="sm" id="mv" style="max-width:160px;background:var(--bg)"></select><button class="arrow" id="next" title="Next">→</button></div>
 </div>
 <script>
 const SUBJ={
@@ -138,13 +148,20 @@ const push=async(k,v)=>{if(!SY)return;try{const a=Array.isArray(v)?v:[v],m=Math.
 function sp(){if(!SY)return;clearTimeout(spT);spT=setTimeout(()=>api('PUT','state',JSON.stringify(st)).catch(()=>{}),800)}
 const idbGet=async k=>{const v=await idbGet0(k);if(v!=null||!SY)return v;try{const r=await api('GET','img:'+k);if(r.v==null)return v;const o=JSON.parse(r.v),d=await db;if(d)d.transaction('i','readwrite').objectStore('i').put(o,k);return o}catch(e){return v}};
 async function pushAll(){const b=$('sy'),ks=new Set();b.textContent='Syncing';for(const q of st.q){ks.add(q.id);ks.add('a:'+q.k);if(q.pk)ks.add('p:'+q.pk)}let n=0;for(const k of ks){const v=await idbGet0(k);if(v)await push('img:'+k,v);b.textContent='Syncing '+(++n)+'/'+ks.size}await api('PUT','state',JSON.stringify(st)).catch(()=>{});b.textContent='Synced'}
+const PTS=['HSC','Trial','Term 4','Term 3','Term 2','Term 1','Half-yearly','Yearly','Assessment Task','Prelim','Other'];
+function ptype(n,h){const t=(n+' '+h.slice(0,1500)).replace(/_/g,' ').toLowerCase(),m=t.match(/\bterm\s*([1-4])\b/);
+ if(/trial/.test(t))return'Trial';if(m)return'Term '+m[1];if(/half[\s-]*yearly/.test(t))return'Half-yearly';if(/\byearly\b/.test(t))return'Yearly';if(/prelim/.test(t))return'Prelim';if(/assessment\s*task|\btask\s*\d|class test|\bct\s*\d|\bat\s*\d\b/.test(t))return'Assessment Task';if(/higher school certificate|\bhsc\b|nesa|board of studies/.test(t))return'HSC';return'Other'}
+const NSW=[['Mathematics Standard',/mathematics\s*standard/g],['Mathematics Extension 2',/mathematics\s*ext(ension)?\s*2/g],['English Advanced',/english\s*advanced/g],['English Standard',/english\s*standard/g],['English Extension',/english\s*ext/g],['English EAL/D',/english\s*\(?eal/g],['Biology',/biology/g],['Investigating Science',/investigating\s*science/g],['Earth & Environmental Science',/earth\s*(and|&)\s*environmental/g],['Economics',/economics/g],['Legal Studies',/legal\s*studies/g],['Modern History',/modern\s*history/g],['Ancient History',/ancient\s*history/g],['History Extension',/history\s*extension/g],['Geography',/geography/g],['Society & Culture',/society\s*(and|&)\s*culture/g],['Studies of Religion',/studies\s*of\s*religion/g],['Software Engineering',/software\s*engineering/g],['Information Processes & Technology',/information\s*processes/g],['Design & Technology',/design\s*(and|&)\s*technology/g],['Engineering Studies',/engineering\s*studies/g],['Industrial Technology',/industrial\s*technology/g],['Food Technology',/food\s*technology/g],['Textiles & Design',/textiles/g],['Agriculture',/agriculture/g],['PDHPE',/pdhpe/g],['Community & Family Studies',/community\s*(and|&)\s*family/g],['Music',/music\s*[12e]/g],['Visual Arts',/visual\s*arts/g],['Drama',/\bdrama\b/g],['Dance',/\bdance\b/g],['French',/\bfrench\b/g],['German',/\bgerman\b/g],['Spanish',/\bspanish\b/g],['Italian',/\bitalian\b/g],['Japanese',/\bjapanese\b/g],['Chinese',/\bchinese\b/g],['Korean',/\bkorean\b/g],['Indonesian',/\bindonesian\b/g],['Hindi',/\bhindi\b/g],['Latin',/\blatin\b/g],['Classical Greek',/classical\s*greek/g],['Computer Science',/computer\s*science/g],['Commerce',/\bcommerce\b/g],['Psychology',/psychology/g]];
+function applyCS(){Object.entries(st.cs||{}).forEach(([k,v])=>SUBJ[k]=v);Object.entries(st.xt||{}).forEach(([s,o])=>SUBJ[s]&&Object.assign(SUBJ[s].t,o))}
+function ensureSub(nm){let k=Object.keys(SUBJ).find(x=>SUBJ[x].n==nm);if(!k){k='c-'+nm.toLowerCase().replace(/[^a-z0-9]+/g,'-');st.cs=st.cs||{};st.cs[k]={n:nm,t:{}};SUBJ[k]=st.cs[k]}return k}
+function addTopic(s,nm){const kw=nm.toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>3).join(',')||nm.toLowerCase();if(st.cs&&st.cs[s])st.cs[s].t[nm]=kw;else{(st.xt=st.xt||{})[s]=st.xt[s]||{};st.xt[s][nm]=kw;SUBJ[s].t[nm]=kw}}
 function guess(s,txt){const l=txt.toLowerCase();let best=UN,bs=0;
  for(const[t,kw]of Object.entries(SUBJ[s].t)){let sc=0;kw.split(',').forEach(k=>{const n=l.split(k).length-1;sc+=n*(k.length>5?3:k.length>3?2:1)});if(sc>bs){bs=sc;best=t}}return best}
 function mgTopic(s,tx){const m=tx.match(/mod(?:ule)?\s*([5-8])/i);
  if(m)return topics(s).find(t=>t.startsWith('Mod '+m[1]));
  if(s=='business'){const b=tx.match(/(operations|marketing|finance|human resources)/i);if(b)return topics(s).find(t=>t.toLowerCase().startsWith(b[1].toLowerCase().slice(0,5)))}}
-function detectSubj(name,head){const t=(name+' '+head).toLowerCase(),c={maths:/mathematics(?!\s*ext)|maths(?!\s*ext)/g,ext1:/extension\s*1|mathematics\s*ext|(^|[^a-z0-9])(3u|ext\s*1)([^a-z0-9]|$)/g,business:/business studies/g,chem:/chemistry/g,physics:/physics/g};
- let best='',bs=0;for(const k in c){const n=(t.match(c[k])||[]).length;if(n>bs){bs=n;best=k}}return best||st.subj}
+function detectSubj(name,head){const t=(name+' '+head).toLowerCase(),c={maths:/mathematics(?!\s*(ext|standard))|maths(?!\s*(ext|standard))/g,ext1:/mathematics\s*ext(ension)?\s*1|maths\s*ext(ension)?\s*1|(^|[^a-z0-9])3u([^a-z0-9]|$)/g,business:/business studies/g,chem:/chemistry/g,physics:/physics/g};
+ let best='',bs=0;for(const k in c){const n=(t.match(c[k])||[]).length;if(n>bs){bs=n;best=k}}if(!best){let bn='';for(const[nm,re]of NSW){const n=(t.match(re)||[]).length;if(n>bs){bs=n;bn=nm}}if(bn)best=ensureSub(bn)}return best||st.subj}
 function marks(t){const b=[...t.matchAll(/\[(\d+)\s*M\]/gi)];if(b.length)return b.reduce((a,m)=>a+ +m[1],0);const m=t.match(/(\d+)\s*marks?/i);return m?+m[1]:0}
 function ring(p,z,w,lb){const r=(z-w)/2,c=2*Math.PI*r,m=z/2;return `<svg class='ring' width='${z}' height='${z}' viewBox='0 0 ${z} ${z}'><circle cx='${m}' cy='${m}' r='${r}' fill='none' stroke='var(--line)' stroke-width='${w}'/><circle class='arc' cx='${m}' cy='${m}' r='${r}' fill='none' stroke='var(--ink)' stroke-width='${w}' stroke-linecap='round' stroke-dasharray='${c}' style='stroke-dashoffset:${c}' data-to='${c*(1-p)}' transform='rotate(-90 ${m} ${m})'/>${lb?`<text x='50%' y='50%' text-anchor='middle' dominant-baseline='central' fill='var(--ink)' font-size='${z/4.2}' font-weight='600'>${lb}</text>`:''}</svg>`}
 const anim=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('.arc').forEach(a=>a.style.strokeDashoffset=a.dataset.to)));
@@ -154,7 +171,11 @@ function render(){
  cnt($('n1'),st.q.length);cnt($('n2'),st.q.filter(q=>(st.ms||{})[q.k]||q.pk).length);
  $('tabs').innerHTML=Object.entries(SUBJ).map(([k,v])=>`<button class='tab ${k==st.subj?'on':''}' data-k='${k}'>${v.n} (${st.q.filter(q=>q.s==k).length})</button>`).join('');
  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.subj=b.dataset.k;save();render()});
- const all=st.q.filter(x=>x.s==st.subj),dn=all.filter(x=>x.d).length;
+ const pts=[...new Set(st.q.filter(x=>x.s==st.subj).map(x=>x.pt||'Other'))].sort((a,b)=>PTS.indexOf(a)-PTS.indexOf(b));if(st.pf&&!pts.includes(st.pf))st.pf='';
+ $('pf').innerHTML=pts.length>1?['',...pts].map(p=>`<button class='sm ${(st.pf||'')==p?'on':''}' data-p='${esc(p)}'>${p?esc(p):'All papers'}</button>`).join(''):'';
+ $('pf').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.pf=b.dataset.p;save();render()});
+ {const v=$('subsel').value;$('subsel').innerHTML='<option value="">Subject: auto-detect</option>'+Object.entries(SUBJ).map(([k,x])=>`<option value="${k}">Force ${esc(x.n)}</option>`).join('');$('subsel').value=v}
+ const all=st.q.filter(x=>x.s==st.subj&&(!st.pf||(x.pt||'Other')==st.pf)),dn=all.filter(x=>x.d).length;
  $('hring').innerHTML=ring(all.length?dn/all.length:0,64,6,(all.length?Math.round(100*dn/all.length):0)+'%');
  if(!all.length){$('grid').innerHTML=`<div class='empty'>No ${SUBJ[st.subj].n} questions yet.<br>Drop a past paper PDF below.</div>`;anim();return}
  const sets=[{n:'All questions',f:()=>1},{n:'Review mistakes',f:q=>RV.includes(q.r)},...(st.subj=='physics'?[{n:'Depth Study: Luna Park',f:isDS,v:1}]:[]),...(st.subj=='physics'||st.subj=='chem'?[{n:'Working Scientifically',f:isWS,v:1}]:[]),...topics(st.subj).map(t=>({n:t,f:q=>q.t==t,v:t!=UN}))];
@@ -170,11 +191,11 @@ async function showQ(dir){const q=cur.list[cur.i],c=$('card');
  $('pt').textContent=cur.title;$('pc').textContent='Question '+(cur.i+1)+' of '+cur.list.length;
  $('pring').innerHTML=ring(cur.i/cur.list.length,36,4);anim();
  c.className='inner';void c.offsetWidth;c.className='inner '+(dir>0?'inR':'inL');
- $('meta').innerHTML=`<span class='chip'>${esc(q.y||'Year ?')}</span><span class='chip'>${esc(q.src)}</span>${q.m?`<span class='chip'>${q.m} marks</span>`:''}<span class='chip'>${esc(q.t)}</span>`;
+ $('meta').innerHTML=`<span class='chip'>${esc(q.y||'Year ?')}</span><span class='chip pt'>${esc(q.pt||'Other')}</span><span class='chip'>${esc(q.src)}</span>${q.m?`<span class='chip'>${q.m} marks</span>`:''}<span class='chip'>${esc(q.t)}</span>`;
  $('qi').removeAttribute('src');$('sol').hidden=true;$('sol').innerHTML='';$('solbtn').hidden=false;$('solbtn').disabled=true;$('solbtn').title='No solution uploaded for this question';$('solbtn').textContent='Show solution';curA=null;curP=false;
  showRate(q);showTp(q);startT(q);
  $('mv').innerHTML=topics(q.s).map(o=>`<option ${o==q.t?'selected':''}>${esc(o)}</option>`).join('');
- $('stage')&&0;document.querySelector('.stage').scrollTop=0;
+ $('pts').innerHTML=PTS.map(o=>`<option ${o==(q.pt||'Other')?'selected':''}>${o}</option>`).join('');$('stage')&&0;document.querySelector('.stage').scrollTop=0;
  idbGet(q.id).then(u=>{if(cur&&cur.list[cur.i]===q&&u)$('qi').src=u});
  let a=await idbGet('a:'+q.k),pg=!(a&&a.length)&&q.pk?await idbGet('p:'+q.pk):null;if(pg)a=pg;if(cur&&cur.list[cur.i]===q&&a&&a.length){curA=a;curP=!!pg;$('solbtn').disabled=false;$('solbtn').title=''}}
 function finish(){clearInterval(tI);$('tt').hidden=true;$('tb').hidden=true;$('tp').hidden=true;const l=cur.list;$('qi').hidden=true;$('meta').hidden=true;$('sol').hidden=true;$('nav').hidden=true;$('fin').hidden=false;
@@ -197,7 +218,7 @@ document.addEventListener('keydown',e=>{if($('pr').hidden)return;if(e.key=='Arro
 const adv=()=>{if(cur.i<cur.list.length-1){cur.i++;showQ(1)}else finish()};
 const qm=q=>q.m||+((q.x.match(/\[(\d+)\s*M\]/i)||[])[1])||1;
 function showRate(q){$('rt').value=q.r||'';$('dn').classList.toggle('on',!!q.d);$('dn').textContent=q.d?'✓ Done':'Mark done'}
-function showTp(q){const t=$('tp');t.hidden=!cur.sort;if(!cur.sort)return;const ts=topics(q.s).filter(x=>x!=UN);t.innerHTML=`<div class='tag' style='margin-top:14px'>Which topic is this?</div><div class='tpb'>`+ts.map((x,i)=>`<button class='sm' data-t='${i}'>${esc(x)}</button>`).join('')+`</div>`;t.querySelectorAll('button').forEach(b=>b.onclick=()=>{q.t=ts[b.dataset.t];save();adv()})}
+function showTp(q){const t=$('tp');t.hidden=!cur.sort;if(!cur.sort)return;const ts=topics(q.s).filter(x=>x!=UN);t.innerHTML=`<div class='tag' style='margin-top:14px'>Which topic is this?</div><div class='tpb'>`+ts.map((x,i)=>`<button class='sm' data-t='${i}'>${esc(x)}</button>`).join('')+`<button class='sm' data-n='1'>+ New topic</button></div>`;t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.n){const nm=(prompt('Topic name')||'').trim();if(!nm)return;addTopic(q.s,nm);q.t=nm}else q.t=ts[b.dataset.t];save();adv()})}
 let tI=null,tS=0,tT=0;
 function paintT(){const o=tS<0,a=Math.abs(tS);$('tt').textContent=(o?'+':'')+Math.floor(a/60)+':'+String(a%60).padStart(2,'0');$('tt').classList.toggle('over',o);$('tb').firstChild.style.width=Math.max(0,tS/tT*100)+'%'}
 function startT(q){clearInterval(tI);const on=!!st.timed;$('tt').hidden=!on;$('tb').hidden=!on;if(!on)return;tT=tS=Math.round(qm(q)*108);paintT();tI=setInterval(()=>{tS--;paintT()},1000)}
@@ -229,7 +250,7 @@ async function ingest(files){files=files.filter(f=>/\.pdf$/i.test(f.name));
  for(const f of files){const tg=$('typesel').value||(/marking|guideline|\bmg\b|solutions/i.test(f.name)?'mg':'ex'),h='h:'+await sha(f)+'|'+tg+'|v5';if((st.files||[]).includes(h)){notes.push(f.name+': already added, skipped');continue}$('msg').innerHTML=`<span class='spin'></span> Reading ${esc(f.name)}…`;
   try{const {lines,pages}=await readPdf(f),text=lines.map(l=>l.t).join('\n'),head=text.slice(0,2500);
    if(text.replace(/\s/g,'').length<200){notes.push(f.name+': no readable text (scanned?)');continue}
-   const s=$('subsel').value||detectSubj(f.name,head),ym=f.name.match(/20\d\d/)||head.match(/20\d\d/),y=ym?ym[0]:'',src=f.name.replace(/\.pdf$/i,'');
+   const s=$('subsel').value||detectSubj(f.name,head),ym=f.name.match(/20\d\d/)||head.match(/20\d\d/),y=ym?ym[0]:'',src=f.name.replace(/\.pdf$/i,''),pt=ptype(f.name,head);
    const pc=pages.map((_,i)=>lines.reduce((a,l)=>a+(l.p==i?l.t.length:0),0));let ft=pc.length;while(ft>1&&pc[ft-1]<40)ft--;
    const solp=ft<pc.length&&$('typesel').value!='mg'?pages.slice(ft).filter(p=>ink(p.cv)).map(p=>p.cv.toDataURL('image/jpeg',.88)):[],hw=solp.length>0&&/question\s+\d/i.test(text);
    const isMG=!hw&&($('typesel').value?$('typesel').value=='mg':(/marking|guideline|\bmg\b|solutions/i.test(f.name)||/marking guidelines|sample answer/i.test(head))),si=splitSol(lines),sp=!hw&&si>0&&$('typesel').value!='mg',parts=sp?[{mg:false,ls:lines.slice(0,si)},{mg:true,ls:lines.slice(si)}]:[{mg:isMG,ls:lines}];
@@ -244,7 +265,7 @@ async function ingest(files){files=files.filter(f=>/\.pdf$/i.test(f.name));
    else{for(const c of cs){const k=s+'|'+y+'|'+c.n,old=oldm[k];if((st.ms||{})[k]==src){idbDel(k);delete st.ms[k];delete st.mg[k]}
      if(old){st.q=st.q.filter(o=>o!=old);idbDel(old.id)}
      const id=Date.now()+'-'+Math.random().toString(36).slice(2);
-     st.q.push({id,k,s,x:c.x,y,src,pk:hw?src:undefined,m:marks(c.x),t:st.mg[k]||(old&&old.t!=UN?old.t:guess(s,c.x)),d:old?old.d:false,f:old?old.f:false,r:old?old.r:''});
+     st.q.push({id,k,s,x:c.x,y,src,pk:hw?src:undefined,m:marks(c.x),t:st.mg[k]||(old&&old.t!=UN?old.t:guess(s,c.x)),d:old?old.d:false,f:old?old.f:false,r:old?old.r:'',pt:old&&old.pt||pt});
      await idbPut(id,crop(pages,c.a,c.b));n++}
     notes.push(f.name+': '+n+' questions added to '+SUBJ[s].n)}}
    if(hw){await idbPut('p:'+src,solp);notes.push(f.name+': '+solp.length+' solution pages attached')}pages.length=0;st.subj=s;(st.files=st.files||[]).push(h)}catch(err){notes.push(f.name+': couldn’t read this file')}}
@@ -253,16 +274,37 @@ $('up').onclick=()=>$('pdfs').click();$('pdfs').onchange=e=>{ingest([...e.target
 document.addEventListener('dragover',e=>e.preventDefault());document.addEventListener('drop',e=>{e.preventDefault();ingest([...e.dataTransfer.files])});
 $('exp').onclick=()=>{const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(st));a.download='hsc-question-bank.json';a.click()};
 $('imp').onclick=()=>$('file').click();
-$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d.q)){st=Object.assign(st,d);save();render()}}catch(x){alert('That file didn’t look right.')}};r.readAsText(f)};
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d.q)){st=Object.assign(st,d);applyCS();save();render()}}catch(x){alert('That file didn’t look right.')}};r.readAsText(f)};
 addEventListener('keydown',e=>{if(!cur||$('pr').hidden||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;if(e.key=='s'&&!$('solbtn').disabled)$('solbtn').click();if(e.key=='d')$('dn').click()});
 $('th').onclick=()=>{const d=document.documentElement,n=(d.dataset.theme||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'))=='dark'?'light':'dark';d.dataset.theme=n;try{localStorage.setItem('hsc-th',n)}catch(e){}};
 try{const t=localStorage.getItem('hsc-th');if(t)document.documentElement.dataset.theme=t}catch(e){}
 addEventListener('dragover',()=>$('up').classList.add('dz'));addEventListener('dragleave',()=>$('up').classList.remove('dz'));addEventListener('drop',()=>$('up').classList.remove('dz'));
 $('up').onkeydown=e=>{if(e.key=='Enter')$('pdfs').click()};
-function migrate(){if(st.xfix)return;st.q.forEach(q=>{if(q.s=='maths'&&(/^Ext 1/.test(q.t)||/3u|ext(ension)?[ _-]?1/i.test(q.src))){q.s='ext1';q.t=guess('ext1',q.x)}});st.xfix=1;save()}
-migrate();
+function migrate(){if(!st.pfix){st.q.forEach(q=>{if(!q.pt)q.pt=ptype(q.src,'')});st.pfix=1;save()}if(st.xfix)return;st.q.forEach(q=>{if(q.s=='maths'&&(/^Ext 1/.test(q.t)||/3u|ext(ension)?[ _-]?1/i.test(q.src))){q.s='ext1';q.t=guess('ext1',q.x)}});st.xfix=1;save()}
+let ddOpen=null;
+function enh(sel){const b=document.createElement('button');b.type='button';b.className='dd';b.setAttribute('aria-haspopup','listbox');sel.after(b);sel.hidden=true;
+ const lab=()=>{const o=sel.options[sel.selectedIndex];b.textContent=o?o.textContent:'';b.classList.toggle('set',!!o&&o.value!==''&&[...sel.options].some(x=>x.value===''))};
+ const d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');Object.defineProperty(sel,'value',{get(){return d.get.call(sel)},set(v){d.set.call(sel,v);lab()},configurable:true});
+ new MutationObserver(lab).observe(sel,{childList:true});lab();b.onclick=()=>menu(sel,b,lab)}
+function menu(sel,b,lab){if(ddOpen){const same=ddOpen.b===b;ddOpen.close();if(same)return}
+ const m=document.createElement('div'),os=[...sel.options];let ix=Math.max(0,sel.selectedIndex);m.className='ddm';m.setAttribute('role','listbox');
+ m.innerHTML=os.map((o,i)=>`<div class='ddi${i==ix?' on':''}' role='option' data-i='${i}'>${esc(o.textContent)}</div>`).join('');document.body.appendChild(m);
+ const r=b.getBoundingClientRect(),h=Math.min(m.scrollHeight,innerHeight*.6),up=innerHeight-r.bottom<h+16&&r.top>h+16;
+ m.style.minWidth=Math.max(r.width,170)+'px';m.style.maxHeight='60vh';m.style.left=Math.max(8,Math.min(r.left,innerWidth-m.offsetWidth-8))+'px';m.style[up?'bottom':'top']=(up?innerHeight-r.top+8:r.bottom+8)+'px';m.style.transformOrigin=up?'bottom left':'top left';
+ const items=[...m.children],hi=n=>{ix=(n+os.length)%os.length;items.forEach((x,i)=>x.classList.toggle('hv',i==ix));items[ix].scrollIntoView({block:'nearest'})};
+ const pick=i=>{close();if(i!=sel.selectedIndex){sel.selectedIndex=i;lab();sel.dispatchEvent(new Event('change',{bubbles:true}))}};
+ const kd=e=>{const k=e.key;if(k=='Escape'||k=='ArrowDown'||k=='ArrowUp'||k=='Enter'){e.preventDefault();e.stopImmediatePropagation();if(k=='Escape')close();else if(k=='Enter')pick(ix);else hi(ix+(k=='ArrowDown'?1:-1))}};
+ const od=e=>{if(!m.contains(e.target)&&e.target!==b)close()};
+ function close(){m.classList.add('out');setTimeout(()=>m.remove(),130);document.removeEventListener('keydown',kd,true);document.removeEventListener('pointerdown',od,true);ddOpen=null;b.classList.remove('open')}
+ m.onclick=e=>{const t=e.target.closest('.ddi');if(t)pick(+t.dataset.i)};
+ document.addEventListener('keydown',kd,true);document.addEventListener('pointerdown',od,true);b.classList.add('open');ddOpen={b,close};if(items[ix])items[ix].scrollIntoView({block:'nearest'})}
+addEventListener('resize',()=>ddOpen&&ddOpen.close());
+document.querySelectorAll('select').forEach(enh);
+applyCS();migrate();
 $('sy').onclick=()=>{if(SY)pushAll()};
-(async()=>{try{const r=await api('GET','state');SY=true;if(r.v){const d=JSON.parse(r.v);if((d.ts||0)>(st.ts||0)){st=Object.assign({q:[],subj:'maths',mg:{}},d);try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}migrate();render();$('sy').textContent='Synced'}else if((st.ts||0)>(d.ts||0)){sp();$('sy').textContent='Synced'}else $('sy').textContent='Synced'}else if(st.q.length)pushAll();else $('sy').textContent='Synced'}catch(e){$('sy').textContent='Local only'}})();
+$('addsub').onclick=()=>{const nm=(prompt('Subject name, e.g. English Advanced')||'').trim();if(!nm)return;st.subj=ensureSub(nm);save();render()};
+$('pts').onchange=e=>{const q=cur.list[cur.i];st.q.forEach(x=>{if(x.src==q.src)x.pt=e.target.value});save();const c=document.querySelector('#meta .pt');if(c)c.textContent=e.target.value};
+(async()=>{try{const r=await api('GET','state');SY=true;if(r.v){const d=JSON.parse(r.v);if((d.ts||0)>(st.ts||0)){st=Object.assign({q:[],subj:'maths',mg:{}},d);try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}applyCS();migrate();render();$('sy').textContent='Synced'}else if((st.ts||0)>(d.ts||0)){sp();$('sy').textContent='Synced'}else $('sy').textContent='Synced'}else if(st.q.length)pushAll();else $('sy').textContent='Synced'}catch(e){$('sy').textContent='Local only'}})();
 try{if(localStorage.getItem('hsc-ni'))document.documentElement.classList.add('ni')}catch(e){}
 $('inv').onclick=()=>{const c=document.documentElement.classList.toggle('ni');try{c?localStorage.setItem('hsc-ni',1):localStorage.removeItem('hsc-ni')}catch(e){}};
 (function(){const L=$('ld');let skip=matchMedia('(prefers-reduced-motion:reduce)').matches;try{if(sessionStorage.getItem('hsc-ld'))skip=true;sessionStorage.setItem('hsc-ld',1)}catch(e){}
