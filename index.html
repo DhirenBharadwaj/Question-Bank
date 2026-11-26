@@ -434,7 +434,17 @@ addEventListener('resize',()=>ddOpen&&ddOpen.close());
  (function f(){rx+=(x-rx)*.18;ry+=(y-ry)*.18;sx+=(x-sx)*.07;sy+=(y-sy)*.07;const t=(a,b)=>`translate3d(${a}px,${b}px,0) translate(-50%,-50%)`;d.style.transform=t(x,y);r.style.transform=t(rx,ry);s.style.transform=t(sx,sy);requestAnimationFrame(f)})()})();
 document.querySelectorAll('select').forEach(enh);
 applyCS();migrate();
-$('sy').onclick=()=>{if(SY)pushAll()};
+$('sy').onclick = async (e) => {
+  e.preventDefault();
+  if(SY) {
+    try {
+      await pushAll();
+    } catch(err) {
+      console.error("Sync failed:", err);
+      $('sy').textContent = 'Sync error';
+    }
+  }
+};
 $('addsub').onclick=()=>{const nm=(prompt('Subject name, e.g. English Advanced')||'').trim();if(!nm)return;st.subj=ensureSub(nm);save();render()};
 $('pts').onchange=e=>{const q=cur.list[cur.i];st.q.forEach(x=>{if(x.src==q.src)x.pt=e.target.value});save();const c=document.querySelector('#meta .pt');if(c)c.textContent=e.target.value};
 (async()=>{try{const r=await api('GET','state');SY=true;if(r.v){const d=JSON.parse(r.v);if((d.ts||0)>(st.ts||0)){st=Object.assign({q:[],subj:'maths',mg:{}},d);try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}applyCS();migrate();render();$('sy').textContent='Synced'}else if((st.ts||0)>(d.ts||0)){sp();$('sy').textContent='Synced'}else $('sy').textContent='Synced'}else if(st.q.length)pushAll();else $('sy').textContent='Synced'}catch(e){$('sy').textContent='Local only'}})();
