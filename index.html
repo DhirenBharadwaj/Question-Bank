@@ -255,43 +255,156 @@ function crop(pg,a,b){const S=2,w=pg[0].cv.width,sg=[];
  const hs=sg.map(s=>Math.max(1,Math.round((s[1]-s[2])*S))),cv=document.createElement('canvas');cv.width=w;cv.height=Math.min(hs.reduce((a,b)=>a+b,0),5000);
  const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,w,cv.height);let o=0;
  sg.forEach((s,i)=>{g.drawImage(pg[s[0]].cv,0,(pg[s[0]].H-s[1])*S,w,hs[i],0,o,w,hs[i]);o+=hs[i]});return cv.toDataURL('image/jpeg',.9)}
-async function ingest(files){files=files.filter(f=>/\.pdf$/i.test(f.name));
- if(!files.length){$('msg').textContent='Only PDF files, please.';return}
- if(!window.pdfjsLib){$('msg').textContent='The PDF reader didn’t load. Check your connection and try again.';return}
- const notes=[];
- for(const f of files){const tg=$('typesel').value||(/marking|guideline|\bmg\b|solutions/i.test(f.name)?'mg':'ex'),h='h:'+await sha(f)+'|'+tg+'|v5';if((st.files||[]).includes(h)){notes.push(f.name+': already added, skipped');continue}$('msg').innerHTML=`<span class='spin'></span> Reading ${esc(f.name)}…`;
-  try{const {lines,pages}=await readPdf(f),text=lines.map(l=>l.t).join('\n'),head=text.slice(0,2500);
-   if(text.replace(/\s/g,'').length<200){notes.push(f.name+': no readable text (scanned?)');continue}
-   const s=$('subsel').value||detectSubj(f.name,head),ym=f.name.match(/20\d\d/)||head.match(/20\d\d/),y=ym?ym[0]:'',src=f.name.replace(/\.pdf$/i,''),pt=ptype(f.name,head);
-   const pc=pages.map((_,i)=>lines.reduce((a,l)=>a+(l.p==i?l.t.length:0),0));let ft=pc.length;while(ft>1&&pc[ft-1]<40)ft--;
-   const solp=ft<pc.length&&$('typesel').value!='mg'?pages.slice(ft).filter(p=>ink(p.cv)).map(p=>p.cv.toDataURL('image/jpeg',.88)):[],hw=solp.length>0&&/question\s+\d/i.test(text);
-   const isMG=!hw&&($('typesel').value?$('typesel').value=='mg':(/marking|guideline|\bmg\b|solutions/i.test(f.name)||/marking guidelines|sample answer/i.test(head))),si=splitSol(lines),sp=!hw&&si>0&&$('typesel').value!='mg',parts=sp?[{mg:false,ls:lines.slice(0,si)},{mg:true,ls:lines.slice(si)}]:[{mg:isMG,ls:lines}];
-   if(isMG&&!sp)st.q=st.q.filter(q=>q.src!=src);
-   const oldm={};if(!isMG||sp||hw){st.q.filter(q=>q.src==src).forEach(q=>{oldm[q.k]=oldm[q.k]||q});st.q=st.q.filter(q=>q.src!=src)}
-   for(const pt of parts){const cs=pt.mg?cutMG(pt.ls):cutQs(pt.ls);let n=0;
-   if(pt.mg){const grp={};cs.forEach(c=>(grp[c.n]=grp[c.n]||[]).push(c));
-    for(const [no,cl] of Object.entries(grp)){const k=s+'|'+y+'|'+no;
-     await idbPut('a:'+k,cl.map(c=>crop(pages,c.a,c.b)));(st.ms=st.ms||{})[k]=src;
-     const tp=mgTopic(s,cl.map(c=>c.x).join(' '));if(tp){st.mg[k]=tp;st.q.filter(q=>q.k==k).forEach(q=>q.t=tp)}n++}
-    notes.push(f.name+': solutions for '+n+' questions linked ('+SUBJ[s].n+')')}
-   else{for(const c of cs){const k=s+'|'+y+'|'+c.n,old=oldm[k];if((st.ms||{})[k]==src){idbDel(k);delete st.ms[k];delete st.mg[k]}
-     if(old){st.q=st.q.filter(o=>o!=old);idbDel(old.id)}
-     const id=Date.now()+'-'+Math.random().toString(36).slice(2);
-     st.q.push({id,k,s,x:c.x,y,src,pk:hw?src:undefined,m:marks(c.x),t:st.mg[k]||(old&&old.t!=UN?old.t:guess(s,c.x)),d:old?old.d:false,f:old?old.f:false,r:old?old.r:'',pt:old&&old.pt||pt});
-     await idbPut(id,crop(pages,c.a,c.b));n++}
-    notes.push(f.name+': '+n+' questions added to '+SUBJ[s].n)}}
-   if(hw){await idbPut('p:'+src,solp);notes.push(f.name+': '+solp.length+' solution pages attached')}pages.length=0;st.subj=s;(st.files=st.files||[]).push(h)}catch(err){notes.push(f.name+': couldn’t read this file')}}
- save();render();$('msg').textContent=notes.join(' · ')}
-$('up').onclick=()=>$('pdfs').click();$('pdfs').onchange=e=>{ingest([...e.target.files]);e.target.value=''};
-document.addEventListener('dragover',e=>e.preventDefault());document.addEventListener('drop',e=>{e.preventDefault();ingest([...e.dataTransfer.files])});
-$('exp').onclick=()=>{const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(st));a.download='hsc-question-bank.json';a.click()};
-$('imp').onclick=()=>$('file').click();
-$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d.q)){st=Object.assign(st,d);applyCS();save();render()}}catch(x){alert('That file didn’t look right.')}};r.readAsText(f)};
-addEventListener('keydown',e=>{if(!cur||$('pr').hidden||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;if(e.key=='s'&&!$('solbtn').disabled)$('solbtn').click();if(e.key=='d')$('dn').click()});
-$('th').onclick=()=>{const d=document.documentElement,n=(d.dataset.theme||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'))=='dark'?'light':'dark';d.dataset.theme=n;try{localStorage.setItem('hsc-th',n)}catch(e){}};
-try{const t=localStorage.getItem('hsc-th');if(t)document.documentElement.dataset.theme=t}catch(e){}
-addEventListener('dragover',()=>$('up').classList.add('dz'));addEventListener('dragleave',()=>$('up').classList.remove('dz'));addEventListener('drop',()=>$('up').classList.remove('dz'));
-$('up').onkeydown=e=>{if(e.key=='Enter')$('pdfs').click()};
+async function ingest(files){
+  files = files.filter(f => /\.pdf$/i.test(f.name));
+  if(!files.length){ $('msg').textContent = 'Only PDF files, please.'; return; }
+  if(!window.pdfjsLib){ $('msg').textContent = 'The PDF reader didn’t load. Check your connection and try again.'; return; }
+  
+  const notes = [];
+  let currentFileNum = 0;
+
+  for(const f of files){
+    currentFileNum++;
+    const tg = $('typesel').value || (/marking|guideline|\bmg\b|solutions/i.test(f.name) ? 'mg' : 'ex');
+    const h = 'h:' + await sha(f) + '|' + tg + '|v5';
+    
+    if((st.files || []).includes(h)){
+      notes.push(f.name + ': already added, skipped');
+      continue;
+    }
+
+    $('msg').innerHTML = `<span class='spin'></span> Processing file ${currentFileNum} of ${files.length}: ${esc(f.name)}…`;
+
+    try {
+      const { lines, pages } = await readPdf(f);
+      const text = lines.map(l => l.t).join('\n');
+      const head = text.slice(0, 2500);
+
+      if(text.replace(/\s/g, '').length < 200){
+        notes.push(f.name + ': no readable text (scanned?)');
+        continue;
+      }
+
+      const s = $('subsel').value || detectSubj(f.name, head);
+      const ym = f.name.match(/20\d\d/) || head.match(/20\d\d/);
+      const y = ym ? ym[0] : '';
+      const src = f.name.replace(/\.pdf$/i, '');
+      const pt = ptype(f.name, head);
+      const pc = pages.map((_, i) => lines.reduce((a, l) => a + (l.p == i ? l.t.length : 0), 0));
+      let ft = pc.length; 
+      while(ft > 1 && pc[ft - 1] < 40) ft--;
+
+      const solp = ft < pc.length && $('typesel').value != 'mg' ? pages.slice(ft).filter(p => ink(p.cv)).map(p => p.cv.toDataURL('image/jpeg', .88)) : [];
+      const hw = solp.length > 0 && /question\s+\d/i.test(text);
+      const isMG = !hw && ($('typesel').value ? $('typesel').value == 'mg' : (/marking|guideline|\bmg\b|solutions/i.test(f.name) || /marking guidelines|sample answer/i.test(head)));
+      const si = splitSol(lines);
+      const sp = !hw && si > 0 && $('typesel').value != 'mg';
+      const parts = sp ? [{mg: false, ls: lines.slice(0, si)}, {mg: true, ls: lines.slice(si)}] : [{mg: isMG, ls: lines}];
+
+      if(isMG && !sp) st.q = st.q.filter(q => q.src != src);
+      const oldm = {};
+      if(!isMG || sp || hw){
+        st.q.filter(q => q.src == src).forEach(q => { oldm[q.k] = oldm[q.k] || q; });
+        st.q = st.q.filter(q => q.src != src);
+      }
+
+      for(const pt_item of parts){
+        const cs = pt_item.mg ? cutMG(pt_item.ls) : cutQs(pt_item.ls);
+        let n = 0;
+        if(pt_item.mg){
+          const grp = {};
+          cs.forEach(c => (grp[c.n] = grp[c.n] || []).push(c));
+          for(const [no, cl] of Object.entries(grp)){
+            const k = s + '|' + y + '|' + no;
+            await idbPut('a:' + k, cl.map(c => crop(pages, c.a, c.b)));
+            (st.ms = st.ms || {})[k] = src;
+            const tp = mgTopic(s, cl.map(c => c.x).join(' '));
+            if(tp){ st.mg[k] = tp; st.q.filter(q => q.k == k).forEach(q => q.t = tp); }
+            n++;
+          }
+          notes.push(f.name + ': solutions for ' + n + ' questions linked (' + SUBJ[s].n + ')');
+        } else {
+          for(const c of cs){
+            const k = s + '|' + y + '|' + c.n;
+            const old = oldm[k];
+            if((st.ms || {})[k] == src){ idbDel(k); delete st.ms[k]; delete st.mg[k]; }
+            if(old){ st.q = st.q.filter(o => o != old); idbDel(old.id); }
+            const id = Date.now() + '-' + Math.random().toString(36).slice(2);
+            st.q.push({id, k, s, x: c.x, y, src, pk: hw ? src : undefined, m: marks(c.x), t: st.mg[k] || (old && old.t != UN ? old.t : guess(s, c.x)), d: old ? old.d : false, f: old ? old.f : false, r: old ? old.r : '', pt: old && old.pt || pt});
+            await idbPut(id, crop(pages, c.a, c.b));
+            n++;
+          }
+          notes.push(f.name + ': ' + n + ' questions added to '+ SUBJ[s].n);
+        }
+      }
+
+      if(hw){ 
+        await idbPut('p:' + src, solp); 
+        notes.push(f.name + ': ' + solp.length + ' solution pages attached'); 
+      }
+      
+      pages.length = 0; 
+      st.subj = s;
+      (st.files = st.files || []).push(h);
+
+      // INCREMENTAL SYNC: Save and push immediately after EACH file finishes
+      save();
+      if(SY){
+        await api('PUT', 'state', JSON.stringify(st)).catch(() => {});
+      }
+
+    } catch(err) {
+      notes.push(f.name + ': couldn’t read this file');
+    }
+  }
+
+  render();
+  $('msg').textContent = notes.join(' · ');
+}
+
+// Event Listeners & Setup
+$('up').onclick = () => $('pdfs').click();
+$('pdfs').onchange = e => { ingest([...e.target.files]); e.target.value = ''; };
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); ingest([...e.dataTransfer.files]); });
+$('exp').onclick = () => {
+  const a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(st));
+  a.download = 'hsc-question-bank.json';
+  a.click();
+};
+$('imp').onclick = () => $('file').click();
+$('file').onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if(Array.isArray(d.q)){ st = Object.assign(st, d); applyCS(); save(); render(); }
+    } catch(x){ alert('That file didn’t look right.'); }
+  };
+  r.readAsText(f);
+};
+addEventListener('keydown', e => {
+  if(!cur || $('pr').hidden || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if(e.key == 's' && !$('solbtn').disabled) $('solbtn').click();
+  if(e.key == 'd') $('dn').click();
+});
+$('th').onclick = () => {
+  const d = document.documentElement,
+        n = (d.dataset.theme || (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark')) == 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n;
+  try { localStorage.setItem('hsc-th', n); } catch(e){}
+};
+try {
+  const t = localStorage.getItem('hsc-th');
+  if(t) document.documentElement.dataset.theme = t;
+} catch(e){}
+addEventListener('dragover', () => $('up').classList.add('dz'));
+addEventListener('dragleave', () => $('up').classList.remove('dz'));
+addEventListener('drop', () => $('up').classList.remove('dz'));
+$('up').onkeydown = e => { if(e.key == 'Enter') $('pdfs').click(); };
 function migrate(){if(!st.pfix){st.q.forEach(q=>{if(!q.pt)q.pt=ptype(q.src,'')});st.pfix=1;save()}if(st.xfix)return;st.q.forEach(q=>{if(q.s=='maths'&&(/^Ext 1/.test(q.t)||/3u|ext(ension)?[ _-]?1/i.test(q.src))){q.s='ext1';q.t=guess('ext1',q.x)}});st.xfix=1;save()}
 let ddOpen=null;
 function enh(sel){const b=document.createElement('button');b.type='button';b.className='dd';b.setAttribute('aria-haspopup','listbox');sel.after(b);sel.hidden=true;
