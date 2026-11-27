@@ -1,11 +1,20 @@
-const { Redis } = require('@upstash/redis');
+const {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} = require('@aws-sdk/client-s3');
 
-// Uses the env vars Upstash adds when you click "Connect to Project"
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-  automaticDeserialization: false,
+const s3 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
 });
+
+const Bucket = process.env.R2_BUCKET;
 
 module.exports = async (req, res) => {
   // Optional passcode: add SYNC_KEY in Vercel > Settings > Environment Variables
@@ -16,15 +25,33 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       const k = req.query.k;
       if (typeof k !== 'string' || !k || k.length > 300) return res.status(400).json({});
-      const v = await redis.get('hsc:' + k);
-      return res.json({ v: v ?? null });
+      try {
+        const obj = await s3.send(new GetObjectCommand({ Bucket, Key: 'hsc/' + k }));
+        const v = await obj.Body.transformToString();
+        return res.json({ v });
+      } catch (e) {
+        if (e.name === 'NoSuchKey' || e.$metadata?.httpStatusCode === 404) {
+          return res.json({ v: null });
+        }
+        throw e;
+      }
     }
+
     const { k, v } = req.body || {};
     if (typeof k !== 'string' || !k || k.length > 300) return res.status(400).json({});
-    if (v === null) await redis.del('hsc:' + k);
-    else await redis.set('hsc:' + k, v);
+    if (v === null) {
+      await s3.send(new DeleteObjectCommand({ Bucket, Key: 'hsc/' + k }));
+    } else {
+      await s3.send(new PutObjectCommand({
+        Bucket,
+        Key: 'hsc/' + k,
+        Body: typeof v === 'string' ? v : JSON.stringify(v),
+        ContentType: 'application/json',
+      }));
+    }
     return res.json({ ok: true });
   } catch (e) {
+    console.error(e); // shows the real error in Vercel's function logs
     return res.status(500).json({ error: 'db' });
   }
 };
